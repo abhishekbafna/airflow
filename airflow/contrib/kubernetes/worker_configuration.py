@@ -153,6 +153,13 @@ class WorkerConfiguration(LoggingMixin):
                 self.kube_config.git_subpath     # dags
             )
             env['AIRFLOW__CORE__DAGS_FOLDER'] = dag_volume_mount_path
+
+        # TODO This change can be submitted into the apache as well.
+        # Set the scheduler env into the worker pod.
+        os_env = os.environ
+        os_env.update(env)
+        env = os_env
+
         return env
 
     def _get_configmaps(self):
