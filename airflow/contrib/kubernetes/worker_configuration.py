@@ -328,6 +328,16 @@ class WorkerConfiguration(LoggingMixin):
             limit_cpu=kube_executor_config.limit_cpu,
             limit_gpu=kube_executor_config.limit_gpu
         )
+        # EWT-290 add priorityClassName and cpu and memory resource into pod spec definition.
+        # The priorityClassName is set as the env (AIRFLOW_POD_PRIORITY_CLASS).
+        # The cpu and memory resource are set into the airflow.cfg file under 'kube_worker_resources'
+        resources = Resources(
+            request_memory=self.kube_config.kube_worker_resources.get('request_memory'),
+            request_cpu=self.kube_config.kube_worker_resources.get('request_cpu'),
+            limit_memory=self.kube_config.kube_worker_resources.get('limit_memory'),
+            limit_cpu=self.kube_config.kube_worker_resources.get('limit_cpu'),
+        ) if resources.is_empty_resource_request() else resources
+
         gcp_sa_key = kube_executor_config.gcp_service_account_key
         annotations = dict(kube_executor_config.annotations) or self.kube_config.kube_annotations
         if gcp_sa_key:
@@ -339,6 +349,7 @@ class WorkerConfiguration(LoggingMixin):
         affinity = kube_executor_config.affinity or self.kube_config.kube_affinity
         tolerations = kube_executor_config.tolerations or self.kube_config.kube_tolerations
 
+        environment = self._get_environment()
         return Pod(
             namespace=namespace,
             name=pod_id,
@@ -353,7 +364,7 @@ class WorkerConfiguration(LoggingMixin):
                 'execution_date': execution_date,
                 'try_number': str(try_number),
             }),
-            envs=self._get_environment(),
+            envs=environment,
             secrets=self._get_secrets(),
             service_account_name=self.kube_config.worker_service_account_name,
             image_pull_secrets=self.kube_config.image_pull_secrets,
@@ -367,5 +378,6 @@ class WorkerConfiguration(LoggingMixin):
             affinity=affinity,
             tolerations=tolerations,
             security_context=self._get_security_context(),
-            configmaps=self._get_configmaps()
+            configmaps=self._get_configmaps(),
+            priority_class=environment.get('AIRFLOW_POD_PRIORITY_CLASS', None)
         )
