@@ -1720,7 +1720,9 @@ def connections_delete(args):
 @cli_utils.deprecated_action(sub_commands=True)
 @cli_utils.action_logging
 def connections(args):
-    if args.list:
+    # EWT-718: This is a work around for the Airflow on GKE. During the debugging we found that there was different
+    # execution path on aurora and gke. We could not conclude what could possibly be the reason for same.
+    if args.subcommand == 'list':
         # Check that no other flags were passed to the command
         invalid_args = list()
         for arg in ['conn_id', 'conn_uri', 'conn_extra'] + alternative_conn_specs:
@@ -1748,7 +1750,7 @@ def connections(args):
             print(msg)
             return
 
-    if args.delete:
+    if args.subcommand == 'delete':
         # Check that only the `conn_id` arg was passed to the command
         invalid_args = list()
         for arg in ['conn_uri', 'conn_extra'] + alternative_conn_specs:
@@ -1791,7 +1793,7 @@ def connections(args):
                 print(msg)
             return
 
-    if args.add:
+    if args.subcommand == 'add':
         # Check that the conn_id and conn_uri args were passed to the command:
         missing_args = list()
         invalid_args = list()

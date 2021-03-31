@@ -561,8 +561,10 @@ class SchedulerJob(BaseJob):
             <pre><code>{task_list}\n<code></pre>
             Blocking tasks:
             <pre><code>{blocking_task_list}\n{bug}<code></pre>
+
+            Airflow Web Server URL: {webserver_base_url}
             """.format(task_list=task_list, blocking_task_list=blocking_task_list,
-                       bug=asciiart.bug)
+                       bug=asciiart.bug, webserver_base_url=conf.get(section='webserver', key='base_url'))
 
             tasks_missed_sla = []
             for sla in slas:
